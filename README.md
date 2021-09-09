@@ -260,5 +260,3 @@ WeChat Sponsor 微信打赏:
 TensorFlow.NET is a part of [SciSharp STACK](https://scisharp.github.io/SciSharp/)
 <br>
 <a href="http://scisharpstack.org"><img src="https://github.com/SciSharp/SciSharp/blob/master/art/scisharp-stack.png" width="391" height="100" /></a>
-
-This edited test
