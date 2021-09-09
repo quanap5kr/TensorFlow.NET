@@ -9,6 +9,8 @@ using static Tensorflow.Binding;
 using static Tensorflow.KerasApi;
 using System.Linq;
 using Tensorflow.Util;
+using System.Diagnostics;
+
 namespace Tensorflow.Keras.Saving
 {
     public class hdf5_format
@@ -140,6 +142,7 @@ namespace Tensorflow.Keras.Saving
                 foreach (var i_ in weight_names)
                 {
                     (bool success, Array result) = Hdf5.ReadDataset<float>(g, i_);
+                    //(bool success, Array result) = Hdf5.ReadDataset<float>(g, $"{name}/{i_}"); // Quan sua
                     if (success)
                         weight_values.Add(np.array(result));
                 }
@@ -193,21 +196,40 @@ namespace Tensorflow.Keras.Saving
                 // weight_values= keras.backend.batch_get_value(weights);
                 foreach (var weight in weights)
                     weight_names.Add(weight.Name);
-                
+
+                Console.WriteLine($"---------------");
                 g = Hdf5.CreateOrOpenGroup(f, Hdf5Utils.NormalizedName(layer.Name));
+                Console.WriteLine($"Group: {layer.Name}");
+
                 save_attributes_to_hdf5_group(g, "weight_names", weight_names.ToArray());
                 foreach (var (name, val) in zip(weight_names, weights))
                 {
                     var tensor = val.AsTensor();
                     if (name.IndexOf("/") > 1)
                     {
+                        Console.WriteLine("Has dash");
                         crDataGroup = Hdf5.CreateOrOpenGroup(g, Hdf5Utils.NormalizedName(name.Split('/')[0]));
+                        Console.WriteLine($"crGroup: {name.Split('/')[0]}");
+
                         WriteDataset(crDataGroup, name.Split('/')[1], tensor);
+                        Console.WriteLine($"crDataGroup: {name.Split('/')[1]}");
+
+
                         Hdf5.CloseGroup(crDataGroup);
+                        
                     }
                     else
                     {
-                        WriteDataset(crDataGroup, name, tensor);
+                        Console.WriteLine($"No dash: layer {layer.Name}");
+                        //crDataGroup = Hdf5.CreateOrOpenGroup(g, Hdf5Utils.NormalizedName(layer.Name));
+                        //Console.WriteLine($"crGroup: {layer.Name}");
+
+                        //WriteDataset(crDataGroup, name, tensor);
+                        Console.WriteLine($"crDataGroup: {name}");
+
+                        //Hdf5.CloseGroup(crDataGroup);
+
+                        WriteDataset(g, name, tensor);
                     }
                 }
                 Hdf5.CloseGroup(g);
@@ -270,24 +292,36 @@ namespace Tensorflow.Keras.Saving
 
         private static void WriteDataset(long f,  string name, Tensor data)
         {
-            switch (data.dtype)
+            try
             {
-                case TF_DataType.TF_FLOAT:
-                    Hdf5.WriteDatasetFromArray<float>(f, name, data.numpy().ToMuliDimArray<float>());
-                    break;
-                case TF_DataType.TF_DOUBLE:
-                    Hdf5.WriteDatasetFromArray<double>(f, name, data.numpy().ToMuliDimArray<double>());
-                    break;
-                case TF_DataType.TF_INT32:
-                    Hdf5.WriteDatasetFromArray<int>(f, name, data.numpy().ToMuliDimArray<int>());
-                    break;
-                case TF_DataType.TF_INT64:
-                    Hdf5.WriteDatasetFromArray<long>(f, name, data.numpy().ToMuliDimArray<long>());
-                    break;
-                default:
-                    Hdf5.WriteDatasetFromArray<float>(f, name, data.numpy().ToMuliDimArray<float>());
-                    break;
+                switch (data.dtype)
+                {
+                    case TF_DataType.TF_FLOAT:
+                        { 
+                        var writen_data = data.numpy().ToMuliDimArray<float>();
+                        Hdf5.WriteDatasetFromArray<float>(f, name, writen_data);
+                        break;
+                        }
+                    case TF_DataType.TF_DOUBLE:
+                        Hdf5.WriteDatasetFromArray<double>(f, name, data.numpy().ToMuliDimArray<double>());
+                        break;
+                    case TF_DataType.TF_INT32:
+                        Hdf5.WriteDatasetFromArray<int>(f, name, data.numpy().ToMuliDimArray<int>());
+                        break;
+                    case TF_DataType.TF_INT64:
+                        Hdf5.WriteDatasetFromArray<long>(f, name, data.numpy().ToMuliDimArray<long>());
+                        break;
+                    default:
+                        Hdf5.WriteDatasetFromArray<float>(f, name, data.numpy().ToMuliDimArray<float>());
+                        break;
+                }
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+                throw;
+            }
+            
         }
 
         private static void WriteAttrs(long f,string typename, string name, Array data)
