@@ -197,9 +197,9 @@ namespace Tensorflow.Keras.Saving
                 foreach (var weight in weights)
                     weight_names.Add(weight.Name);
 
-                Console.WriteLine($"---------------");
+                Debug.WriteLine($"---------------");
                 g = Hdf5.CreateOrOpenGroup(f, Hdf5Utils.NormalizedName(layer.Name));
-                Console.WriteLine($"Group: {layer.Name}");
+                Debug.WriteLine($"Group: {layer.Name}");
 
                 save_attributes_to_hdf5_group(g, "weight_names", weight_names.ToArray());
                 foreach (var (name, val) in zip(weight_names, weights))
@@ -207,12 +207,12 @@ namespace Tensorflow.Keras.Saving
                     var tensor = val.AsTensor();
                     if (name.IndexOf("/") > 1)
                     {
-                        Console.WriteLine("Has dash");
+                        Debug.WriteLine("Has dash");
                         crDataGroup = Hdf5.CreateOrOpenGroup(g, Hdf5Utils.NormalizedName(name.Split('/')[0]));
-                        Console.WriteLine($"crGroup: {name.Split('/')[0]}");
+                        Debug.WriteLine($"crGroup: {name.Split('/')[0]}");
 
                         WriteDataset(crDataGroup, name.Split('/')[1], tensor);
-                        Console.WriteLine($"crDataGroup: {name.Split('/')[1]}");
+                        Debug.WriteLine($"crDataGroup: {name.Split('/')[1]}");
 
 
                         Hdf5.CloseGroup(crDataGroup);
@@ -220,12 +220,12 @@ namespace Tensorflow.Keras.Saving
                     }
                     else
                     {
-                        Console.WriteLine($"No dash: layer {layer.Name}");
+                        Debug.WriteLine($"No dash: layer {layer.Name}");
                         //crDataGroup = Hdf5.CreateOrOpenGroup(g, Hdf5Utils.NormalizedName(layer.Name));
                         //Console.WriteLine($"crGroup: {layer.Name}");
 
                         //WriteDataset(crDataGroup, name, tensor);
-                        Console.WriteLine($"crDataGroup: {name}");
+                        Debug.WriteLine($"crDataGroup: {name}");
 
                         //Hdf5.CloseGroup(crDataGroup);
 
